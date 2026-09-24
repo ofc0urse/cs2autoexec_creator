@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+<meta name="color-scheme" content="dark">
+<title>CS2 Autoexec Creator</title>
+<style>
+  :root {
+    --bg: #0b0e13;
+    --bg-2: #10151c;
+    --surface: #151b23;
+    --surface-2: #1b232d;
+    --border: #28323f;
+    --border-2: #36424f;
+    --text: #e7eaee;
+    --muted: #97a3b1;
+    --faint: #6b7684;
+    --accent: #f2a93b;
+    --accent-2: #ffcc70;
+    --accent-ink: #1a1206;
+    --ct: #5aa9ff;
+    --ok: #5ccf85;
+    --warn: #ffb347;
+    --err: #ff6b6b;
+    --radius: 10px;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 500px at 85% -10%, rgba(242,169,59,.10), transparent 60%),
+      radial-gradient(900px 400px at -10% 10%, rgba(90,169,255,.07), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 15px/1.5 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-2); }
+  code, kbd, .mono { font-family: var(--mono); font-size: .92em; }
+  code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
+  kbd { background: var(--surface-2); border: 1px solid var(--border-2); border-bottom-width: 2px; border-radius: 5px; padding: 0 6px; }
+
+  /* ---------- Header ---------- */
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(11,14,19,.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .top-inner {
+    max-width: 1180px; margin: 0 auto; padding: 10px 16px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), #d9771b); color: var(--accent-ink);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 14px rgba(242,169,59,.25);
+  }
+  .brand small { color: var(--muted); font-weight: 600; letter-spacing: .12em; }
+  nav.sections { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-left: auto; }
+  nav.sections::-webkit-scrollbar { display: none; }
+  nav.sections a {
+    color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600;
+    padding: 6px 10px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap;
+  }
+  nav.sections a:hover { color: var(--text); border-color: var(--border-2); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+
+  .hero { margin: 8px 0 24px; }
+  .hero h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 34px); letter-spacing: .02em; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { margin: 0; color: var(--muted); max-width: 760px; }
+  .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: linear-gradient(180deg, var(--surface), var(--bg-2));
+    border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 18px; overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(242,169,59,.08), transparent 45%);
+  }
+  .card-head h2 { margin: 0; font-size: 17px; text-transform: uppercase; letter-spacing: .08em; }
+  .card-head .num { color: var(--accent); font-family: var(--mono); font-size: 13px; }
+  .card-head .grow { flex: 1; }
+  .card-intro { padding: 12px 18px 0; color: var(--muted); font-size: 14px; margin: 0; }
+  .card-body { padding: 6px 18px 14px; }
+  .card.section-off .card-body, .card.section-off .card-intro, .card.section-off .xhair-layout { opacity: .4; }
+
+  /* ---------- Settings rows ---------- */
+  .row {
+    display: grid; grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.25fr); gap: 6px 22px;
+    padding: 12px 0; border-bottom: 1px dashed var(--border);
+    align-items: center;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row.dim { opacity: .45; }
+  .row-label { font-weight: 650; }
+  .row-label .cvar { display: block; font-family: var(--mono); font-size: 12px; color: var(--faint); font-weight: 500; margin-top: 1px; word-break: break-all; }
+  .row-desc { grid-column: 1 / -1; color: var(--muted); font-size: 13.5px; margin-top: -2px; }
+  .ctrl { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+  input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 28px; }
+  input[type=number], input[type=text], select {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border-2);
+    border-radius: 7px; padding: 7px 9px; font: inherit; min-width: 0;
+  }
+  input[type=number] { width: 92px; font-family: var(--mono); }
+  input[type=text].key { width: 120px; font-family: var(--mono); }
+  select { width: 100%; cursor: pointer; }
+  input:focus-visible, select:focus-visible, button:focus-visible, .switch input:focus-visible + span {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  input[type=color] {
+    width: 44px; height: 34px; padding: 2px; border: 1px solid var(--border-2);
+    background: var(--bg); border-radius: 7px; cursor: pointer;
+  }
+  .unit { color: var(--faint); font-size: 12px; font-family: var(--mono); }
+
+  /* switch */
+  .switch { position: relative; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch span.track {
+    width: 42px; height: 24px; border-radius: 999px; background: var(--border-2); position: relative;
+    transition: background .15s; flex: none;
+  }
+  .switch span.track::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+    background: #cfd6de; transition: transform .15s, background .15s;
+  }
+  .switch input:checked + span.track { background: var(--accent); }
+  .switch input:checked + span.track::after { transform: translateX(18px); background: #fff; }
+  .switch .state { font-size: 13px; color: var(--muted); }
+  .sec-switch .state { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+
+  /* buttons */
+  button, .btn {
+    font: inherit; font-weight: 650; cursor: pointer; border-radius: 8px;
+    border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text);
+    padding: 8px 14px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    transition: background .15s, border-color .15s, transform .05s;
+  }
+  button:hover, .btn:hover { border-color: var(--accent); }
+  button:active { transform: translateY(1px); }
+  button.primary {
+    background: linear-gradient(180deg, var(--accent-2), var(--accent)); color: var(--accent-ink);
+    border-color: transparent; text-transform: uppercase; letter-spacing: .05em;
+  }
+  button.primary:hover { filter: brightness(1.06); }
+  button.ct { background: linear-gradient(180deg, #7dbbff, var(--ct)); color: #04111f; border-color: transparent; text-transform: uppercase; letter-spacing: .05em; }
+  button.small { padding: 5px 10px; font-size: 13px; }
+  button.listening { border-color: var(--accent); color: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px rgba(242,169,59,.25); } }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ---------- Crosshair ---------- */
+  .xhair-layout { display: grid; grid-template-columns: 300px 1fr; gap: 0 24px; padding: 14px 18px 0; }
+  .xhair-preview { position: sticky; top: 84px; align-self: start; }
+  .xhair-canvas-wrap {
+    border: 1px solid var(--border-2); border-radius: var(--radius); overflow: hidden; position: relative;
+    aspect-ratio: 1 / 1; background: #333;
+  }
+  #xhairCanvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .xhair-tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 6px; }
+  .xhair-tools button { flex: 1 1 auto; justify-content: center; }
+  .xhair-tools button.active { border-color: var(--accent); color: var(--accent); }
+  .xhair-note { color: var(--faint); font-size: 12px; margin: 4px 0 12px; }
+  .xhair-layout .card-body { padding: 0; }
+
+  /* ---------- Info boxes ---------- */
+  .note {
+    border: 1px solid var(--border-2); border-left: 3px solid var(--warn); border-radius: 8px;
+    background: rgba(255,179,71,.06); padding: 10px 14px; color: var(--muted); font-size: 13.5px; margin: 12px 0;
+  }
+  .note strong { color: var(--text); }
+  .note.info { border-left-color: var(--ct); background: rgba(90,169,255,.06); }
+
+  .edpi { margin-left: auto; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .edpi b { color: var(--accent); }
+
+  /* ---------- Output ---------- */
+  .output-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 18px; border-top: 1px solid var(--border); }
+  .output-actions .spacer { flex: 1; }
+  pre.cfg {
+    margin: 0; padding: 16px 18px; max-height: 520px; overflow: auto;
+    background: #07090c; font: 13px/1.55 var(--mono); color: #cfd7e0; white-space: pre;
+    tab-size: 4;
+  }
+  pre.cfg .c { color: #5f6b78; }
+  pre.cfg .k { color: var(--accent-2); }
+  pre.cfg .s { color: #9ee6a8; }
+  pre.cfg .n { color: #8cc8ff; }
+  .desk-status { font-size: 13px; color: var(--muted); padding: 0 18px 14px; word-break: break-all; }
+  .desk-status.ok { color: var(--ok); }
+  .desk-status.err { color: var(--err); }
+  .hidden { display: none !important; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px);
+    background: var(--surface-2); border: 1px solid var(--border-2); color: var(--text);
+    padding: 10px 16px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50; max-width: calc(100% - 32px);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Guide ---------- */
+  .guide { padding: 6px 18px 16px; }
+  .guide ol { padding-left: 22px; margin: 8px 0; }
+  .guide li { margin: 8px 0; }
+  .guide .path {
+    display: block; margin: 6px 0; padding: 8px 10px; background: #07090c; border: 1px solid var(--border);
+    border-radius: 7px; font-family: var(--mono); font-size: 13px; word-break: break-all;
+  }
+  .guide h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 18px 0 4px; }
+
+  footer { text-align: center; color: var(--faint); font-size: 12.5px; padding: 24px 16px 40px; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px) {
+    .xhair-layout { grid-template-columns: 1fr; }
+    .xhair-preview { position: static; max-width: 340px; margin: 0 auto 8px; width: 100%; }
+  }
+  @media (max-width: 640px) {
+    body { font-size: 14.5px; }
+    .top-inner { flex-wrap: wrap; gap: 8px; padding: 8px 16px; }
+    nav.sections { margin-left: 0; width: 100%; }
+    .brand small { display: none; }
+    .row { grid-template-columns: 1fr; gap: 6px; }
+    .card-head { padding: 12px 14px; flex-wrap: wrap; }
+    .card-body, .guide { padding-left: 14px; padding-right: 14px; }
+    .xhair-layout { padding: 12px 14px 0; }
+    .card-intro { padding-left: 14px; padding-right: 14px; }
+    .output-actions { padding: 12px 14px; }
+    .output-actions button { flex: 1 1 100%; justify-content: center; }
+    .output-actions .spacer { display: none; }
+    pre.cfg { font-size: 12px; padding: 12px 14px; max-height: 420px; }
+    .edpi { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/></svg>
+      </div>
+      <div>CS2 Autoexec <small>Creator</small></div>
+    </div>
+    <nav class="sections" id="nav" aria-label="Sekcje"></nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Generator <span>autoexec.cfg</span> dla Counter-Strike 2</h1>
+    <p>Ustaw czułość, celownik, viewmodel, bindy, dźwięk, HUD i limit FPS. Plik zawiera wyłącznie komendy działające w CS2. Na dole znajdziesz podgląd pliku, przycisk pobierania i instrukcję instalacji.</p>
+    <div class="hero-actions">
+      <a class="btn" href="#output">Przejdź do podglądu pliku ↓</a>
+      <a class="btn" href="#guide">Jak zainstalować?</a>
+      <button type="button" id="resetAll" title="Przywraca wszystkie ustawienia do wartości domyślnych">Resetuj wszystko</button>
+    </div>
+  </section>
+
+  <div id="sections"></div>
+
+  <section class="card" id="output">
+    <div class="card-head">
+      <span class="num">//</span>
+      <h2>Podgląd pliku autoexec.cfg</h2>
+      <div class="grow"></div>
+      <span class="unit" id="lineCount"></span>
+    </div>
+    <pre class="cfg" id="cfgPreview" aria-label="Podgląd wygenerowanego pliku"></pre>
+    <div class="output-actions">
+      <button type="button" class="primary" id="downloadBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12M6 10l6 6 6-6M4 21h16"/></svg>
+        Pobierz autoexec.cfg
+      </button>
+      <button type="button" class="ct hidden" id="saveCs2Btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7"/></svg>
+        Zapisz do CS2
+      </button>
+      <button type="button" id="copyBtn">Kopiuj do schowka</button>
+      <div class="spacer"></div>
+      <button type="button" class="small hidden" id="chooseFolderBtn">Wskaż folder CS2…</button>
+      <button type="button" class="small hidden" id="openFolderBtn">Otwórz folder cfg</button>
+    </div>
+    <div class="desk-status hidden" id="deskStatus"></div>
+  </section>
+
+  <section class="card" id="guide">
+    <div class="card-head"><span class="num">?</span><h2>Instrukcja: jak uruchomić autoexec w CS2</h2></div>
+    <div class="guide">
+      <h3>1. Wrzuć plik do folderu cfg</h3>
+      <p>Pobrany plik <code>autoexec.cfg</code> skopiuj do folderu <code>game\csgo\cfg</code> w katalogu z grą. Domyślnie jest to:</p>
+      <span class="path">C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\cfg</span>
+      <p>Jeśli masz grę na innym dysku, najprościej: w Steamie kliknij prawym na <b>Counter-Strike 2</b> → <b>Zarządzaj</b> → <b>Przeglądaj pliki lokalne</b>, a potem wejdź w <code>game</code> → <code>csgo</code> → <code>cfg</code>.</p>
+      <div class="note info">Uwaga: CS2 używa folderu <code>game\csgo\cfg</code>, a <b>nie</b> starego <code>csgo\cfg</code> z CS:GO. Upewnij się, że plik nazywa się dokładnie <code>autoexec.cfg</code> (a nie np. <code>autoexec.cfg.txt</code> – włącz w Eksploratorze „Rozszerzenia nazw plików”).</div>
+
+      <h3>2. Każ CS2 uruchamiać plik przy starcie</h3>
+      <ol>
+        <li>W Steamie kliknij prawym na <b>Counter-Strike 2</b> → <b>Właściwości…</b></li>
+        <li>W zakładce <b>Ogólne</b> znajdź pole <b>Opcje uruchamiania</b>.</li>
+        <li>Wpisz: <code>+exec autoexec</code> (jeśli masz już inne opcje, dopisz na końcu, oddzielając spacją).</li>
+      </ol>
+      <p>Opcja <code>+exec autoexec</code> gwarantuje, że plik wykona się przy każdym uruchomieniu gry – bez niej CS2 nie zawsze wczytuje autoexec samodzielnie.</p>
+
+      <h3>3. Sprawdź, czy działa</h3>
+      <p>Włącz konsolę (Ustawienia → Gra → <b>Włącz konsolę dewelopera</b>, domyślnie klawisz <kbd>`</kbd> / <kbd>~</kbd>). Po starcie gry w konsoli powinien pojawić się napis <code>autoexec.cfg wczytany</code>. Plik możesz też wczytać ręcznie w dowolnej chwili komendą <code>exec autoexec</code>.</p>
+
+      <h3>Dobrze wiedzieć</h3>
+      <ul>
+        <li>Ustawienia z autoexec nadpisują te z menu przy każdym starcie. Jeśli coś zmienisz w menu gry, a potem uruchomisz grę ponownie – wróci wartość z pliku.</li>
+        <li>Wyłączając sekcję przełącznikiem „w pliku”, pomijasz ją całkowicie – gra zachowa wtedy Twoje ustawienia z menu.</li>
+        <li>Bindy <code>noclip</code> i <code>sv_rethrow_last_grenade</code> działają tylko na własnym serwerze z <code>sv_cheats 1</code> (np. mapa uruchomiona z „Treningu”).</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>CS2 Autoexec Creator · nieoficjalne narzędzie, niezwiązane z Valve · <span id="envLabel">wersja przeglądarkowa</span></footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* =====================================================================
+   *  Definicje ustawień. Każde pole ma: klucz (cvar), etykietę, opis PL,
+   *  typ kontrolki i wartość domyślną. Tylko komendy działające w CS2.
+   * ===================================================================== */
+
+  const HUD_COLORS = [
+    [0, 'Domyślny (zależny od drużyny)'], [1, 'Biały'], [2, 'Jasnoniebieski'], [3, 'Niebieski'],
+    [4, 'Fioletowy'], [5, 'Czerwony'], [6, 'Pomarańczowy'], [7, 'Żółty'], [8, 'Zielony'],
+    [9, 'Morski'], [10, 'Różowy'],
+  ];
+
+  const SECTIONS = [
+    {
+      id: 'mouse', title: 'Mysz', header: 'MYSZ',
+      intro: 'CS2 zawsze korzysta z surowego wejścia myszy (raw input) i nie ma akceleracji, więc liczą się tylko czułość i mnożnik przy lunecie.',
+      extra: 'edpi',
+      items: [
+        { key: 'sensitivity', label: 'Czułość', type: 'range', min: 0.05, max: 8, step: 0.01, def: 1.25,
+          desc: 'Główna czułość myszy w grze. Im wyżej, tym szybciej obraca się kamera. Większość zawodników gra w okolicach 600–1200 eDPI (DPI × czułość).' },
+        { key: 'zoom_sensitivity_ratio', label: 'Czułość przy przybliżeniu', type: 'range', min: 0.1, max: 3, step: 0.01, def: 1,
+          desc: 'Mnożnik czułości podczas celowania przez lunetę (AWP, Scout, AUG/SG). 1 = odczucie zbliżone do czułości bez lunety.' },
+      ],
+    },
+    {
+      id: 'crosshair', title: 'Celownik', header: 'CELOWNIK', special: 'crosshair',
+      intro: 'Podgląd po lewej odświeża się na żywo. Rozmiary są przybliżone dla rozdzielczości 1920×1080 i powiększone, by łatwiej ocenić detale.',
+      items: [
+        { key: 'cl_crosshairstyle', label: 'Styl', type: 'select', def: 4,
+          options: [[0, '0 – Domyślny (dynamiczny)'], [1, '1 – Domyślny statyczny'], [2, '2 – Klasyczny'], [3, '3 – Klasyczny dynamiczny'], [4, '4 – Klasyczny statyczny'], [5, '5 – Legacy']],
+          desc: 'Sposób rysowania celownika. Styl 4 (klasyczny statyczny) nie rozszerza się podczas ruchu i strzelania – wybiera go większość zawodników. Pozostałe ustawienia najlepiej widać w stylach klasycznych.' },
+        { key: 'cl_crosshairsize', label: 'Rozmiar', type: 'range', min: 0, max: 10, step: 0.5, def: 2,
+          desc: 'Długość każdej z czterech kresek celownika.' },
+        { key: 'cl_crosshairthickness', label: 'Grubość', type: 'range', min: 0, max: 6, step: 0.1, def: 0.5,
+          desc: 'Grubość kresek (i kropki). Małe wartości dają cienkie, precyzyjne linie.' },
+        { key: 'cl_crosshairgap', label: 'Odstęp', type: 'range', min: -5, max: 5, step: 0.5, def: -2,
+          desc: 'Odległość kresek od środka. Wartości ujemne zbliżają kreski do siebie – ok. -3 sprawia, że niemal się stykają.' },
+        { key: 'cl_crosshair_t', label: 'Celownik w kształcie T', type: 'toggle', def: 0,
+          desc: 'Usuwa górną kreskę – celownik wygląda jak odwrócona litera T.' },
+        { key: 'cl_crosshairdot', label: 'Kropka na środku', type: 'toggle', def: 0,
+          desc: 'Dodaje kropkę w samym środku celownika. Jej wielkość zależy od grubości.' },
+        { key: '_xcolor', label: 'Kolor', type: 'color', def: '#00ff00',
+          desc: 'Kolor celownika. Plik zapisuje go jako kolor własny (cl_crosshaircolor 5 + składowe R, G, B), więc możesz wybrać dowolny odcień.' },
+        { key: 'cl_crosshairusealpha', label: 'Użyj przezroczystości', type: 'toggle', def: 1,
+          desc: 'Włącza stosowanie przezroczystości (alfa) poniżej. Wyłączone = celownik zawsze w pełni kryjący.' },
+        { key: 'cl_crosshairalpha', label: 'Przezroczystość (alfa)', type: 'range', min: 0, max: 255, step: 1, def: 255,
+          showIf: s => s.cl_crosshairusealpha == 1,
+          desc: '255 = w pełni widoczny, niższe wartości = bardziej przezroczysty celownik.' },
+        { key: 'cl_crosshair_drawoutline', label: 'Obrys', type: 'toggle', def: 1,
+          desc: 'Czarna obwódka wokół kresek. Bardzo pomaga, gdy celownik ginie na jasnym tle.' },
+        { key: 'cl_crosshair_outlinethickness', label: 'Grubość obrysu', type: 'range', min: 0, max: 3, step: 0.5, def: 1,
+          showIf: s => s.cl_crosshair_drawoutline == 1,
+          desc: 'Szerokość czarnej obwódki w pikselach.' },
+        { key: 'cl_crosshairgap_useweaponvalue', label: 'Odstęp zależny od broni', type: 'toggle', def: 0,
+          desc: 'Gdy włączone, odstęp zmienia się w zależności od trzymanej broni. Wyłącz, jeśli chcesz zawsze ten sam celownik.' },
+        { key: 'cl_crosshair_recoil', label: 'Celownik podąża za odrzutem', type: 'toggle', def: 0,
+          desc: 'Nowość w CS2: celownik przesuwa się razem z odrzutem broni, pokazując, gdzie polecą kolejne pociski.' },
+      ],
+    },
+    {
+      id: 'viewmodel', title: 'Viewmodel', header: 'VIEWMODEL (BRON W REKACH)',
+      intro: 'Położenie modelu broni na ekranie. Nie wpływa na celność – tylko na to, ile ekranu zasłania broń.',
+      presets: [
+        { label: 'Domyślny CS2', values: { viewmodel_fov: 60, viewmodel_offset_x: 1, viewmodel_offset_y: 1, viewmodel_offset_z: -1 } },
+        { label: 'Szeroki (popularny)', values: { viewmodel_fov: 68, viewmodel_offset_x: 2.5, viewmodel_offset_y: 0, viewmodel_offset_z: -1.5 } },
+        { label: 'Blisko środka', values: { viewmodel_fov: 68, viewmodel_offset_x: 1, viewmodel_offset_y: 1, viewmodel_offset_z: -1 } },
+      ],
+      items: [
+        { key: 'viewmodel_fov', label: 'FOV modelu broni', type: 'range', min: 54, max: 68, step: 1, def: 60,
+          desc: 'Pole widzenia modelu broni. Wyższa wartość = broń mniejsza i dalej, więcej widocznego ekranu. Nie zmienia pola widzenia samej gry.' },
+        { key: 'viewmodel_offset_x', label: 'Przesunięcie X (lewo/prawo)', type: 'range', min: -2.5, max: 2.5, step: 0.5, def: 1,
+          desc: 'Wyższe wartości przesuwają broń w prawo, niższe w lewo.' },
+        { key: 'viewmodel_offset_y', label: 'Przesunięcie Y (przód/tył)', type: 'range', min: -2, max: 2, step: 0.5, def: 1,
+          desc: 'Wyższe wartości przybliżają broń do środka ekranu, niższe odsuwają ją do tyłu.' },
+        { key: 'viewmodel_offset_z', label: 'Przesunięcie Z (góra/dół)', type: 'range', min: -2, max: 2, step: 0.5, def: -1,
+          desc: 'Niższe wartości opuszczają broń niżej – odsłania to więcej ekranu.' },
+      ],
+    },
+    {
+      id: 'binds', title: 'Bindy', header: 'BINDY',
+      intro: 'Kliknij „Ustaw”, a potem naciśnij klawisz lub przycisk myszy (także kółko), albo wpisz nazwę klawisza ręcznie (np. n, mouse4, kp_end).',
+      notes: [
+        '<strong>Jump-throw celowo pominięty.</strong> W CS2 Valve zablokowało bindy wykonujące kilka akcji gracza jednym klawiszem (m.in. klasyczny jump-throw <code>+jump; -attack</code>). Jednocześnie rzut w skoku stał się spójny – wystarczy nacisnąć skok i puścić przycisk rzutu w tym samym momencie. Dlatego generator nie dodaje takiego binda.',
+      ],
+      items: [
+        { key: 'bind_cleardecals', label: 'Czyszczenie decali', type: 'bind', cmd: 'r_cleardecals', def: { on: 1, key: 'x' },
+          desc: 'Usuwa ślady po kulach i plamy krwi ze ścian, które mogą zasłaniać wrogów. Działa na każdym serwerze.' },
+        { key: 'bind_noclip', label: 'Przełącz noclip', type: 'bind', cmd: 'noclip', def: { on: 1, key: 'n' },
+          desc: 'Latanie przez ściany – przydatne do nauki smoke’ów i pozycji. Tylko na własnym serwerze z sv_cheats 1.' },
+        { key: 'bind_rethrow', label: 'Powtórz ostatni granat', type: 'bind', cmd: 'sv_rethrow_last_grenade', def: { on: 0, key: 'kp_enter' },
+          desc: 'Ponownie rzuca ostatni granat z tego samego miejsca – idealne do ćwiczenia lineupów. Tylko z sv_cheats 1.' },
+        { key: 'bind_jumpwheel', label: 'Skok na kółku myszy', type: 'bind', cmd: '+jump', def: { on: 0, key: 'mwheeldown' },
+          desc: 'Dodatkowy skok pod kółkiem myszy (spacja nadal działa). Ułatwia bunny-hop i wskakiwanie na skrzynie.' },
+      ],
+    },
+    {
+      id: 'sound', title: 'Dźwięk', header: 'DZWIEK',
+      intro: 'Głośność ogólna i poszczególnych elementów muzyki. Wartości od 0 (wyciszone) do 1 (100%).',
+      items: [
+        { key: 'volume', label: 'Głośność główna', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5,
+          desc: 'Ogólna głośność gry. Najlepiej ustawić wyżej w grze, a ciszej w systemie – kroki i strzały będą wyraźniejsze.' },
+        { key: 'snd_menumusic_volume', label: 'Muzyka w menu', type: 'range', min: 0, max: 1, step: 0.01, def: 0,
+          desc: 'Głośność muzyki w menu głównym.' },
+        { key: 'snd_roundstart_volume', label: 'Muzyka na starcie rundy', type: 'range', min: 0, max: 1, step: 0.01, def: 0,
+          desc: 'Muzyka odtwarzana na początku rundy (w czasie zakupów).' },
+        { key: 'snd_roundend_volume', label: 'Muzyka na końcu rundy', type: 'range', min: 0, max: 1, step: 0.01, def: 0,
+          desc: 'Muzyka po zakończeniu rundy.' },
+        { key: 'snd_mvp_volume', label: 'Muzyka MVP', type: 'range', min: 0, max: 1, step: 0.01, def: 0.2,
+          desc: 'Utwór zestawu muzycznego gracza, który zdobył MVP rundy.' },
+        { key: 'snd_tensecondwarning_volume', label: 'Ostrzeżenie 10 sekund', type: 'range', min: 0, max: 1, step: 0.01, def: 0.3,
+          desc: 'Muzyka ostrzegająca, że do końca rundy lub wybuchu bomby zostało 10 sekund. Warto zostawić ją słyszalną.' },
+        { key: 'snd_deathcamera_volume', label: 'Muzyka kamery śmierci', type: 'range', min: 0, max: 1, step: 0.01, def: 0,
+          desc: 'Krótki motyw odtwarzany po Twojej śmierci.' },
+        { key: 'snd_mute_losefocus', label: 'Wycisz grę w tle', type: 'toggle', def: 1,
+          desc: 'Wycisza CS2, gdy okno gry nie jest aktywne (np. po Alt+Tab).' },
+      ],
+    },
+    {
+      id: 'hud', title: 'HUD i radar', header: 'HUD I RADAR',
+      intro: 'Wygląd interfejsu i radaru (minimapy).',
+      items: [
+        { key: 'hud_scaling', label: 'Skala HUD', type: 'range', min: 0.5, max: 0.95, step: 0.05, def: 0.85,
+          desc: 'Rozmiar całego interfejsu (życie, amunicja, killfeed). Mniejsza wartość = mniej zasłoniętego ekranu.' },
+        { key: 'cl_hud_color', label: 'Kolor HUD', type: 'select', def: 0, options: HUD_COLORS,
+          desc: 'Kolor elementów interfejsu, np. paska życia i amunicji.' },
+        { key: 'cl_hud_radar_scale', label: 'Rozmiar radaru', type: 'range', min: 0.8, max: 1.3, step: 0.05, def: 1,
+          desc: 'Wielkość okna radaru w rogu ekranu.' },
+        { key: 'cl_radar_scale', label: 'Przybliżenie radaru', type: 'range', min: 0.25, max: 1, step: 0.05, def: 0.7,
+          desc: 'Jak duży fragment mapy widać na radarze. Mniejsza wartość = widać większą część mapy.' },
+        { key: 'cl_radar_always_centered', label: 'Radar zawsze wyśrodkowany', type: 'toggle', def: 0,
+          desc: 'Włączone: Twoja pozycja jest zawsze na środku radaru. Wyłączone: radar pokazuje więcej mapy, gdy jesteś przy jej krawędzi.' },
+        { key: 'cl_radar_rotate', label: 'Obracanie radaru', type: 'toggle', def: 1,
+          desc: 'Radar obraca się zgodnie z kierunkiem, w którym patrzysz. Wyłącz, jeśli wolisz mapę zawsze w tej samej orientacji.' },
+        { key: 'cl_radar_square_with_scoreboard', label: 'Kwadratowy radar przy tabeli wyników', type: 'toggle', def: 1,
+          desc: 'Po otwarciu tabeli wyników (Tab) radar zmienia się w kwadrat pokazujący całą mapę.' },
+      ],
+    },
+    {
+      id: 'perf', title: 'Wydajność', header: 'WYDAJNOSC',
+      intro: 'Limit klatek na sekundę.',
+      items: [
+        { key: 'fps_max', label: 'Limit FPS', type: 'range', min: 0, max: 1000, step: 1, def: 0, unit: '0 = brak',
+          quick: [[0, 'Bez limitu'], [144, '144'], [240, '240'], [300, '300'], [400, '400']],
+          desc: 'Maksymalna liczba klatek na sekundę w grze. 0 = bez limitu. Limit nieco powyżej odświeżania monitora może dać stabilniejsze czasy klatek i niższe temperatury.' },
+      ],
+    },
+  ];
+
+  const ITEMS = SECTIONS.flatMap(s => s.items.map(i => ({ ...i, section: s.id })));
+  const STORAGE_KEY = 'cs2-autoexec-creator:v1';
+
+  /* ============================ Stan ============================ */
+
+  function defaults() {
+    const s = { _sections: {}, _dpi: 800 };
+    for (const sec of SECTIONS) s._sections[sec.id] = true;
+    for (const it of ITEMS) s[it.key] = typeof it.def === 'object' ? { ...it.def } : it.def;
+    return s;
+  }
+
+  function load() {
+    const s = defaults();
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return s;
+      const saved = JSON.parse(raw);
+      for (const it of ITEMS) {
+        if (!(it.key in saved)) continue;
+        if (it.type === 'bind') {
+          const b = saved[it.key] || {};
+          s[it.key] = { on: b.on ? 1 : 0, key: sanitizeKey(b.key) || it.def.key };
+        } else if (it.type === 'color') {
+          if (/^#[0-9a-f]{6}$/i.test(saved[it.key])) s[it.key] = saved[it.key];
+        } else {
+          s[it.key] = clampItem(it, saved[it.key]);
+        }
+      }
+      if (saved._sections) for (const id in s._sections) if (id in saved._sections) s._sections[id] = !!saved._sections[id];
+      if (Number.isFinite(+saved._dpi)) s._dpi = +saved._dpi;
+    } catch (_) { /* brak dostępu do localStorage – używamy domyślnych */ }
+    return s;
+  }
+
+  let state = load();
+  let saveTimer = 0;
+  function persist() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+    }, 200);
+  }
+
+  /* ============================ Pomocnicze ============================ */
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const el = (tag, attrs = {}, ...children) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') n.className = v;
+      else if (k === 'html') n.innerHTML = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? '' : v);
+    }
+    for (const c of children.flat()) if (c != null) n.append(c);
+    return n;
+  };
+  const decimals = step => (String(step).split('.')[1] || '').length;
+  function clampItem(it, v) {
+    if (it.type === 'toggle') return v == 1 || v === true ? 1 : 0;
+    if (it.type === 'select') {
+      const ok = it.options.some(([ov]) => ov == v);
+      return ok ? Number(v) : it.def;
+    }
+    let n = Number(v);
+    if (!Number.isFinite(n)) return it.def;
+    n = Math.min(it.max, Math.max(it.min, n));
+    const d = decimals(it.step);
+    return Number((Math.round(n / it.step) * it.step).toFixed(d));
+  }
+  function fmt(n) {
+    // Liczby bez zbędnych zer, zawsze z kropką dziesiętną.
+    const s = Number(n).toFixed(4);
+    return s.replace(/\.?0+$/, '') || '0';
+  }
+  function sanitizeKey(k) {
+    if (typeof k !== 'string') return '';
+    k = k.trim().toLowerCase();
+    // Nazwy klawiszy w CS2 nie zawierają spacji, cudzysłowów ani średników.
+    return /^[a-z0-9_\-=\[\]\\',.\/`]{1,20}$/.test(k) ? k : '';
+  }
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
+  const KEY_CODES = {
+    Space: 'space', Tab: 'tab', CapsLock: 'capslock', Enter: 'enter', Backspace: 'backspace',
+    ShiftLeft: 'shift', ShiftRight: 'rshift', ControlLeft: 'ctrl', ControlRight: 'rctrl',
+    AltLeft: 'alt', AltRight: 'ralt', ArrowUp: 'uparrow', ArrowDown: 'downarrow',
+    ArrowLeft: 'leftarrow', ArrowRight: 'rightarrow', Insert: 'ins', Delete: 'del', Home: 'home',
+    End: 'end', PageUp: 'pgup', PageDown: 'pgdn', Pause: 'pause',
+    Numpad0: 'kp_ins', Numpad1: 'kp_end', Numpad2: 'kp_downarrow', Numpad3: 'kp_pgdn',
+    Numpad4: 'kp_leftarrow', Numpad5: 'kp_5', Numpad6: 'kp_rightarrow', Numpad7: 'kp_home',
+    Numpad8: 'kp_uparrow', Numpad9: 'kp_pgup', NumpadEnter: 'kp_enter', NumpadAdd: 'kp_plus',
+    NumpadSubtract: 'kp_minus', NumpadMultiply: 'kp_multiply', NumpadDivide: 'kp_slash',
+    NumpadDecimal: 'kp_del', Semicolon: 'semicolon', Minus: '-', Equal: '=', BracketLeft: '[',
+    BracketRight: ']', Backslash: '\\', Quote: "'", Comma: ',', Period: '.', Slash: '/',
+  };
+  function codeToCs2(code) {
+    if (KEY_CODES[code]) return KEY_CODES[code];
+    let m;
+    if ((m = /^Key([A-Z])$/.exec(code))) return m[1].toLowerCase();
+    if ((m = /^Digit(\d)$/.exec(code))) return m[1];
+    if ((m = /^F(\d{1,2})$/.exec(code))) return 'f' + m[1];
+    return '';
+  }
+  const MOUSE_BUTTONS = { 0: 'mouse1', 1: 'mouse3', 2: 'mouse2', 3: 'mouse4', 4: 'mouse5' };
+
+  let toastTimer = 0;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  /* ============================ Renderowanie UI ============================ */
+
+  const refs = {};         // key -> funkcja synchronizująca kontrolkę ze stanem
+  const rowRefs = {};      // key -> element wiersza (do showIf)
+
+  function renderSwitch(checked, onChange, label, cls = '') {
+    const input = el('input', { type: 'checkbox' });
+    input.checked = !!checked;
+    const state = el('span', { class: 'state' });
+    const sync = () => { state.textContent = label ? label(input.checked) : ''; };
+    input.addEventListener('change', () => { onChange(input.checked); sync(); });
+    sync();
+    const wrap = el('label', { class: 'switch ' + cls }, input, el('span', { class: 'track' }), state);
+    wrap.setChecked = v => { input.checked = !!v; sync(); };
+    return wrap;
+  }
+
+  function renderControl(it) {
+    const change = v => { state[it.key] = v; update(); };
+
+    if (it.type === 'range') {
+      const range = el('input', { type: 'range', min: it.min, max: it.max, step: it.step, 'aria-label': it.label });
+      const num = el('input', { type: 'number', min: it.min, max: it.max, step: it.step, 'aria-label': it.label + ' – wartość', inputmode: 'decimal' });
+      range.addEventListener('input', () => { num.value = range.value; change(clampItem(it, range.value)); });
+      num.addEventListener('input', () => {
+        if (num.value === '' || !Number.isFinite(+num.value)) return;
+        const v = clampItem(it, num.value);
+        range.value = v;
+        change(v);
+      });
+      num.addEventListener('change', () => { num.value = state[it.key]; });
+      refs[it.key] = () => { range.value = state[it.key]; num.value = state[it.key]; };
+      const ctrl = el('div', { class: 'ctrl' }, range, num);
+      if (it.unit) ctrl.append(el('span', { class: 'unit' }, it.unit));
+      if (it.quick) {
+        const chips = el('div', { class: 'chips' }, it.quick.map(([v, l]) =>
+          el('button', { type: 'button', class: 'small', onclick: () => { change(v); refs[it.key](); } }, l)));
+        return el('div', {}, ctrl, el('div', { style: 'margin-top:8px' }, chips));
+      }
+      return ctrl;
+    }
+
+    if (it.type === 'select') {
+      const sel = el('select', { 'aria-label': it.label },
+        it.options.map(([v, l]) => el('option', { value: v }, l)));
+      sel.addEventListener('change', () => change(clampItem(it, sel.value)));
+      refs[it.key] = () => { sel.value = state[it.key]; };
+      return el('div', { class: 'ctrl' }, sel);
+    }
+
+    if (it.type === 'toggle') {
+      const sw = renderSwitch(state[it.key], v => change(v ? 1 : 0), v => v ? 'Włączone (1)' : 'Wyłączone (0)');
+      refs[it.key] = () => sw.setChecked(state[it.key]);
+      return el('div', { class: 'ctrl' }, sw);
+    }
+
+    if (it.type === 'color') {
+      const PRESETS = [['#ff0000', 'Czerwony'], ['#00ff00', 'Zielony'], ['#ffff00', 'Żółty'], ['#0000ff', 'Niebieski'], ['#00ffff', 'Cyjan'], ['#ff00ff', 'Różowy'], ['#ffffff', 'Biały']];
+      const input = el('input', { type: 'color', 'aria-label': 'Kolor celownika' });
+      const hex = el('span', { class: 'unit' });
+      input.addEventListener('input', () => change(input.value.toLowerCase()));
+      refs[it.key] = () => {
+        input.value = state[it.key];
+        const [r, g, b] = hexToRgb(state[it.key]);
+        hex.textContent = `R ${r} · G ${g} · B ${b}`;
+      };
+      const chips = el('div', { class: 'chips' }, PRESETS.map(([c, name]) =>
+        el('button', { type: 'button', class: 'small', title: name, 'aria-label': name, style: `padding:5px;`,
+          onclick: () => { change(c); refs[it.key](); } },
+          el('span', { style: `display:block;width:16px;height:16px;border-radius:3px;background:${c};border:1px solid rgba(0,0,0,.5)` }))));
+      return el('div', {}, el('div', { class: 'ctrl' }, input, hex), el('div', { style: 'margin-top:8px' }, chips));
+    }
+
+    if (it.type === 'bind') {
+      const keyInput = el('input', { type: 'text', class: 'key', spellcheck: 'false', autocomplete: 'off', 'aria-label': it.label + ' – klawisz' });
+      const setBtn = el('button', { type: 'button', class: 'small' }, 'Ustaw');
+      const sw = renderSwitch(state[it.key].on, v => { state[it.key].on = v ? 1 : 0; update(); }, v => v ? 'Aktywny' : 'Pominięty');
+      keyInput.addEventListener('input', () => {
+        const k = sanitizeKey(keyInput.value);
+        keyInput.style.borderColor = k ? '' : 'var(--err)';
+        if (k) { state[it.key].key = k; update(); }
+      });
+      keyInput.addEventListener('change', () => { keyInput.value = state[it.key].key; keyInput.style.borderColor = ''; });
+      setBtn.addEventListener('click', () => captureKey(setBtn, k => {
+        state[it.key].key = k; refs[it.key](); update();
+      }));
+      refs[it.key] = () => { keyInput.value = state[it.key].key; sw.setChecked(state[it.key].on); };
+      return el('div', { class: 'ctrl', style: 'flex-wrap:wrap' }, keyInput, setBtn, sw);
+    }
+  }
+
+  let stopCapture = null;
+  function captureKey(btn, done) {
+    if (stopCapture) stopCapture();
+    const original = btn.textContent;
+    btn.textContent = 'Naciśnij klawisz… (Esc = anuluj)';
+    btn.classList.add('listening');
+    const finish = k => {
+      stopCapture();
+      if (k) { done(k); toast('Ustawiono klawisz: ' + k); }
+    };
+    const onKey = e => {
+      e.preventDefault(); e.stopPropagation();
+      if (e.code === 'Escape') return finish('');
+      const k = codeToCs2(e.code);
+      if (k) finish(k); else toast('Tego klawisza nie da się rozpoznać – wpisz nazwę ręcznie.');
+    };
+    const onMouse = e => {
+      if (e.target === btn && e.button === 0) return; // pierwsze kliknięcie w sam przycisk
+      e.preventDefault(); e.stopPropagation();
+      finish(MOUSE_BUTTONS[e.button] || '');
+    };
+    const onWheel = e => { e.preventDefault(); finish(e.deltaY < 0 ? 'mwheelup' : 'mwheeldown'); };
+    const onCtx = e => e.preventDefault();
+    let armed = false;
+    const onDown = e => { if (armed) onMouse(e); };
+    setTimeout(() => { armed = true; }, 0);
+    window.addEventListener('keydown', onKey, true);
+    window.addEventListener('mousedown', onDown, true);
+    window.addEventListener('wheel', onWheel, { capture: true, passive: false });
+    window.addEventListener('contextmenu', onCtx, true);
+    stopCapture = () => {
+      window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('mousedown', onDown, true);
+      window.removeEventListener('wheel', onWheel, { capture: true });
+      window.removeEventListener('contextmenu', onCtx, true);
+      btn.textContent = original;
+      btn.classList.remove('listening');
+      stopCapture = null;
+    };
+  }
+
+  function renderRow(it) {
+    const cvarLabel = it.type === 'bind' ? `bind "…" "${it.cmd}"`
+      : it.type === 'color' ? 'cl_crosshaircolor 5 + _r/_g/_b' : it.key;
+    const row = el('div', { class: 'row' },
+      el('div', { class: 'row-label' }, it.label, el('span', { class: 'cvar' }, cvarLabel)),
+      renderControl(it),
+      el('div', { class: 'row-desc' }, it.desc));
+    rowRefs[it.key] = row;
+    return row;
+  }
+
+  function renderSections() {
+    const root = $('#sections');
+    const nav = $('#nav');
+    SECTIONS.forEach((sec, idx) => {
+      nav.append(el('a', { href: '#' + sec.id }, sec.title));
+      const sw = renderSwitch(state._sections[sec.id], v => { state._sections[sec.id] = v; update(); },
+        v => v ? 'w pliku' : 'pominięta', 'sec-switch');
+      sw.title = 'Uwzględnij tę sekcję w wygenerowanym pliku';
+      refs['_sec_' + sec.id] = () => sw.setChecked(state._sections[sec.id]);
+
+      const card = el('section', { class: 'card', id: sec.id },
+        el('div', { class: 'card-head' },
+          el('span', { class: 'num' }, String(idx + 1).padStart(2, '0')),
+          el('h2', {}, sec.title), el('div', { class: 'grow' }), sw));
+
+      const rows = sec.items.map(renderRow);
+
+      if (sec.special === 'crosshair') {
+        card.append(el('p', { class: 'card-intro' }, sec.intro));
+        card.append(el('div', { class: 'xhair-layout' }, renderCrosshairPreview(), el('div', { class: 'card-body' }, rows)));
+        card.append(el('div', { style: 'height:8px' }));
+      } else {
+        const body = el('div', { class: 'card-body' });
+        if (sec.intro) card.append(el('p', { class: 'card-intro' }, sec.intro));
+        if (sec.notes) sec.notes.forEach(n => body.append(el('div', { class: 'note', html: n })));
+        if (sec.presets) {
+          body.append(el('div', { class: 'chips', style: 'margin:12px 0 4px' },
+            el('span', { class: 'unit', style: 'align-self:center;margin-right:4px' }, 'Presety:'),
+            sec.presets.map(p => el('button', { type: 'button', class: 'small', onclick: () => {
+              Object.assign(state, p.values); syncAll(); update(); toast('Zastosowano preset: ' + p.label);
+            } }, p.label))));
+        }
+        if (sec.extra === 'edpi') body.append(renderEdpi());
+        body.append(...rows);
+        card.append(body);
+      }
+      root.append(card);
+    });
+  }
+
+  function renderEdpi() {
+    const dpi = el('input', { type: 'number', min: 100, max: 32000, step: 50, 'aria-label': 'DPI myszy', inputmode: 'numeric' });
+    const out = el('span', { class: 'edpi' });
+    const calc = () => {
+      const d = +state._dpi || 0;
+      out.innerHTML = `eDPI: <b>${Math.round(d * state.sensitivity)}</b> · cm/360°: <b>${d ? (2.54 * 360 / (d * state.sensitivity * 0.022)).toFixed(1) : '–'}</b>`;
+    };
+    dpi.addEventListener('input', () => { state._dpi = +dpi.value || 0; calc(); persist(); });
+    refs._dpi = () => { dpi.value = state._dpi; calc(); };
+    return el('div', { class: 'row' },
+      el('div', { class: 'row-label' }, 'DPI Twojej myszy', el('span', { class: 'cvar' }, 'tylko do obliczeń – nie trafia do pliku')),
+      el('div', { class: 'ctrl', style: 'flex-wrap:wrap' }, dpi, out),
+      el('div', { class: 'row-desc' }, 'Wpisz DPI ustawione w sterowniku myszy, aby zobaczyć eDPI i ile centymetrów trzeba przesunąć mysz, by obrócić się o 360°. Przydatne przy porównywaniu ustawień z innymi graczami.'));
+  }
+
+  /* ============================ Podgląd celownika ============================ */
+
+  const BACKGROUNDS = {
+    dust: { label: 'Piasek', paint: (c, w, h) => {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#a9c4dc'); g.addColorStop(.42, '#d8cfb6'); g.addColorStop(.43, '#c8a574'); g.addColorStop(1, '#8f6f45');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.fillStyle = 'rgba(80,55,30,.25)';
+      for (let i = 0; i < 6; i++) c.fillRect((i * 53) % w, h * .43 + (i % 3) * 18, 28, 2);
+    } },
+    dark: { label: 'Ciemne', paint: (c, w, h) => {
+      const g = c.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#20262d'); g.addColorStop(1, '#0d1014');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+    } },
+    bright: { label: 'Jasne', paint: (c, w, h) => {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#d9dde2');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+    } },
+    grass: { label: 'Trawa', paint: (c, w, h) => {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#6b8f4e'); g.addColorStop(1, '#344d27');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+    } },
+  };
+  let bgChoice = 'dust';
+  let zoom = 3;
+
+  function renderCrosshairPreview() {
+    const canvas = el('canvas', { id: 'xhairCanvas', width: 300, height: 300, role: 'img', 'aria-label': 'Podgląd celownika' });
+    const bgBtns = Object.entries(BACKGROUNDS).map(([id, b]) => {
+      const btn = el('button', { type: 'button', class: 'small' + (id === bgChoice ? ' active' : ''), 'data-bg': id }, b.label);
+      btn.addEventListener('click', () => {
+        bgChoice = id;
+        canvas.parentElement.parentElement.querySelectorAll('[data-bg]').forEach(x => x.classList.toggle('active', x === btn));
+        drawCrosshair();
+      });
+      return btn;
+    });
+    const zoomBtns = [1, 2, 3, 4].map(z => {
+      const btn = el('button', { type: 'button', class: 'small' + (z === zoom ? ' active' : ''), 'data-zoom': z }, z + '×');
+      btn.addEventListener('click', () => {
+        zoom = z;
+        canvas.parentElement.parentElement.querySelectorAll('[data-zoom]').forEach(x => x.classList.toggle('active', x === btn));
+        drawCrosshair();
+      });
+      return btn;
+    });
+    return el('div', { class: 'xhair-preview' },
+      el('div', { class: 'xhair-canvas-wrap' }, canvas),
+      el('div', { class: 'xhair-tools' }, bgBtns),
+      el('div', { class: 'xhair-tools' }, zoomBtns),
+      el('p', { class: 'xhair-note' }, 'Podgląd poglądowy – w grze wygląd może się minimalnie różnić zależnie od rozdzielczości. Style 0, 1 i 5 w grze mają dodatkowo dynamiczne zachowanie.'));
+  }
+
+  function drawCrosshair() {
+    const canvas = $('#xhairCanvas');
+    if (!canvas) return;
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    const cssSize = canvas.clientWidth || 300;
+    const W = Math.round(cssSize * dpr);
+    if (canvas.width !== W) { canvas.width = W; canvas.height = W; }
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    BACKGROUNDS[bgChoice].paint(ctx, W, W);
+
+    // Wymiary w pikselach ekranu 1080p (przybliżenie renderowania CS2).
+    const s = state;
+    const thick = Math.max(1, Math.round(s.cl_crosshairthickness * 2));
+    const len = Math.round(s.cl_crosshairsize * 2);
+    const gap = Math.round(s.cl_crosshairgap + 4);
+    const outline = s.cl_crosshair_drawoutline ? Math.max(0, Math.round(s.cl_crosshair_outlinethickness)) : 0;
+    const alpha = s.cl_crosshairusealpha ? s.cl_crosshairalpha / 255 : 1;
+    const [r, g, b] = hexToRgb(s._xcolor);
+
+    // Rysujemy w siatce "pikseli ekranu" przeskalowanych o zoom*dpr.
+    const px = zoom * dpr;
+    const cx = W / 2, cy = W / 2;
+    const half = thick / 2;
+    const rects = [];
+    if (len > 0) {
+      rects.push([-gap - len, -half, len, thick]);     // lewa
+      rects.push([gap, -half, len, thick]);            // prawa
+      rects.push([-half, gap, thick, len]);            // dolna
+      if (!s.cl_crosshair_t) rects.push([-half, -gap - len, thick, len]); // górna
+    }
+    if (s.cl_crosshairdot) rects.push([-half, -half, thick, thick]);
+
+    const toScreen = ([x, y, w, h], grow) => [
+      Math.round(cx + (x - grow) * px), Math.round(cy + (y - grow) * px),
+      Math.round((w + grow * 2) * px), Math.round((h + grow * 2) * px),
+    ];
+    if (outline > 0) {
+      ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+      for (const rc of rects) ctx.fillRect(...toScreen(rc, outline));
+    }
+    ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+    for (const rc of rects) ctx.fillRect(...toScreen(rc, 0));
+  }
+
+  /* ============================ Generowanie pliku ============================ */
+
+  function line(cvar, value) { return `${cvar} ${value}`; }
+
+  function sectionLines(sec) {
+    const out = [];
+    for (const it of sec.items) {
+      const v = state[it.key];
+      if (it.type === 'bind') {
+        if (v.on && v.key) out.push(`bind "${v.key}" "${it.cmd}"`);
+      } else if (it.type === 'color') {
+        const [r, g, b] = hexToRgb(v);
+        out.push(line('cl_crosshaircolor', 5), line('cl_crosshaircolor_r', r), line('cl_crosshaircolor_g', g), line('cl_crosshaircolor_b', b));
+      } else {
+        out.push(line(it.key, fmt(v)));
+      }
+    }
+    return out;
+  }
+
+  function generate() {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const L = [
+      '// ============================================================',
+      '//  autoexec.cfg - Counter-Strike 2',
+      `//  Wygenerowano: ${date} (CS2 Autoexec Creator)`,
+      '//  Umiesc w: ...\\Counter-Strike Global Offensive\\game\\csgo\\cfg\\',
+      '//  Opcje uruchamiania w Steam: +exec autoexec',
+      '// ============================================================',
+    ];
+    let any = false;
+    for (const sec of SECTIONS) {
+      if (!state._sections[sec.id]) continue;
+      const lines = sectionLines(sec);
+      if (!lines.length) continue;
+      any = true;
+      L.push('', `// ---------- ${sec.header} ----------`, ...lines);
+    }
+    if (!any) L.push('', '// (wszystkie sekcje wylaczone)');
+    L.push('', 'echo "autoexec.cfg wczytany"', '');
+    return L.join('\n');
+  }
+
+  function highlight(text) {
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return text.split('\n').map(l => {
+      if (l.startsWith('//')) return `<span class="c">${esc(l)}</span>`;
+      const m = /^(\S+)(\s+)(.*)$/.exec(l);
+      if (!m) return esc(l);
+      const val = m[3].replace(/("[^"]*")|(-?\d+(?:\.\d+)?)/g, (x, str, num) =>
+        str ? `<span class="s">${esc(str)}</span>` : `<span class="n">${num}</span>`);
+      return `<span class="k">${esc(m[1])}</span>${m[2]}${val}`;
+    }).join('\n');
+  }
+
+  /* ============================ Aktualizacja ============================ */
+
+  let currentCfg = '';
+  function update() {
+    currentCfg = generate();
+    $('#cfgPreview').innerHTML = highlight(currentCfg);
+    $('#lineCount').textContent = currentCfg.split('\n').filter(l => l && !l.startsWith('//')).length + ' komend';
+    for (const it of ITEMS) {
+      if (it.showIf) rowRefs[it.key].classList.toggle('dim', !it.showIf(state));
+    }
+    for (const sec of SECTIONS) $('#' + sec.id).classList.toggle('section-off', !state._sections[sec.id]);
+    if (refs._dpi) refs._dpi();
+    drawCrosshair();
+    persist();
+  }
+  function syncAll() { for (const k in refs) refs[k](); }
+
+  /* ============================ Akcje ============================ */
+
+  function download() {
+    const blob = new Blob([currentCfg], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = el('a', { href: url, download: 'autoexec.cfg' });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Pobieranie autoexec.cfg…');
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(currentCfg);
+      toast('Skopiowano do schowka');
+    } catch (_) {
+      const range = document.createRange();
+      range.selectNodeContents($('#cfgPreview'));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      toast('Zaznaczono tekst – naciśnij Ctrl+C');
+    }
+  }
+
+  /* ---------- Integracja z aplikacją desktopową (Electron) ---------- */
+
+  function setupDesktop() {
+    const api = window.cs2desktop;
+    if (!api) return;
+    const status = $('#deskStatus');
+    const setStatus = (msg, kind = '') => {
+      status.textContent = msg;
+      status.className = 'desk-status' + (kind ? ' ' + kind : '');
+    };
+    ['#saveCs2Btn', '#chooseFolderBtn', '#openFolderBtn'].forEach(s => $(s).classList.remove('hidden'));
+    $('#envLabel').textContent = 'wersja desktopowa';
+
+    const showFolder = res => {
+      if (res && res.ok) {
+        setStatus(`Folder CS2: ${res.cfgDir}` + (res.source === 'manual' ? ' (wskazany ręcznie)' : ' (wykryty automatycznie)'));
+        $('#openFolderBtn').disabled = false;
+      } else {
+        setStatus('Nie znaleziono folderu CS2 automatycznie. Użyj „Wskaż folder CS2…”.', 'err');
+        $('#openFolderBtn').disabled = true;
+      }
+    };
+    api.detect().then(showFolder).catch(() => showFolder(null));
+
+    const choose = async () => {
+      const res = await api.chooseFolder();
+      if (res && res.ok) { showFolder(res); return true; }
+      if (res && res.error) setStatus(res.error, 'err');
+      return false;
+    };
+
+    $('#chooseFolderBtn').addEventListener('click', choose);
+    $('#openFolderBtn').addEventListener('click', () => api.openFolder());
+    $('#saveCs2Btn').addEventListener('click', async () => {
+      const btn = $('#saveCs2Btn');
+      btn.disabled = true;
+      try {
+        let res = await api.save(currentCfg);
+        if (res && res.needFolder) {
+          toast('Nie znaleziono CS2 – wskaż folder gry');
+          if (await choose()) res = await api.save(currentCfg);
+        }
+        if (res && res.ok) {
+          const msg = res.unchanged ? `Plik jest już aktualny: ${res.path}`
+            : `Zapisano: ${res.path}` + (res.backup ? ` · kopia zapasowa: ${res.backup}` : '');
+          setStatus(msg, 'ok');
+          toast(res.unchanged ? 'Plik był już aktualny' : 'Zapisano autoexec.cfg w folderze CS2');
+        } else if (res && res.error) {
+          setStatus(res.error, 'err');
+          toast('Nie udało się zapisać pliku');
+        }
+      } catch (e) {
+        setStatus('Błąd zapisu: ' + (e && e.message ? e.message : e), 'err');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  /* ============================ Start ============================ */
+
+  renderSections();
+  syncAll();
+  update();
+  setupDesktop();
+
+  $('#downloadBtn').addEventListener('click', download);
+  $('#copyBtn').addEventListener('click', copy);
+  $('#resetAll').addEventListener('click', () => {
+    if (!confirm('Przywrócić wszystkie ustawienia do wartości domyślnych?')) return;
+    state = defaults(); syncAll(); update(); toast('Przywrócono ustawienia domyślne');
+  });
+  window.addEventListener('resize', drawCrosshair);
+})();
+</script>
+</body>
+</html>
