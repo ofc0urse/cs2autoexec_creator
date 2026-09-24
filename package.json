@@ -1,8 +1,8 @@
 {
   "name": "cs2-autoexec-creator",
   "productName": "CS2 Autoexec Creator",
-  "version": "1.0.0",
-  "description": "Generator pliku autoexec.cfg dla Counter-Strike 2 (strona + aplikacja desktopowa)",
+  "version": "1.1.0",
+  "description": "autoexec.cfg generator for Counter-Strike 2 (web page + Windows desktop app)",
   "main": "electron/main.js",
   "author": "ofc0urse",
   "license": "MIT",
@@ -25,6 +25,7 @@
     },
     "files": [
       "index.html",
+      "assets/**/*",
       "electron/**/*",
       "package.json"
     ],
