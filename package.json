@@ -1,0 +1,50 @@
+{
+  "name": "cs2-autoexec-creator",
+  "productName": "CS2 Autoexec Creator",
+  "version": "1.0.0",
+  "description": "Generator pliku autoexec.cfg dla Counter-Strike 2 (strona + aplikacja desktopowa)",
+  "main": "electron/main.js",
+  "author": "ofc0urse",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "dist": "electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "io.github.ofc0urse.cs2autoexeccreator",
+    "productName": "CS2 Autoexec Creator",
+    "artifactName": "CS2-Autoexec-Creator-Setup-${version}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CS2 Autoexec Creator"
+    }
+  }
+}
